@@ -1,25 +1,27 @@
 {
  "scripts": {
-    "start": "node server.js"
-  },
-  "name": "employee-tracker-cms",
-  "description": "",
-  "version": "1.0.0",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kimberlyamaya/Employee-Tracker-CMS.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/kimberlyamaya/Employee-Tracker-CMS/issues"
-  },
-  "homepage": "https://github.com/kimberlyamaya/Employee-Tracker-CMS#readme",
-  "dependencies": {
-    "console.table": "^0.10.0",
-    "inquirer": "^8.2.0",
-    "mysql2": "^2.3.3"
-  },
-  "devDependencies": {}
+  "start": "node server.js"
+ },
+ "name": "employee-tracker-cms",
+ "description": "",
+ "version": "1.0.0",
+ "main": "index.js",
+ "repository": {
+  "type": "git",
+  "url": "git+https://github.com/kimberlyamaya/Employee-Tracker-CMS.git"
+ },
+ "author": "",
+ "license": "ISC",
+ "bugs": {
+  "url": "https://github.com/kimberlyamaya/Employee-Tracker-CMS/issues"
+ },
+ "homepage": "https://github.com/kimberlyamaya/Employee-Tracker-CMS#readme",
+ "dependencies": {
+  "ascii-art": "^2.8.5",
+  "console.table": "^0.10.0",
+  "figlet": "^1.5.2",
+  "inquirer": "^8.2.0",
+  "mysql2": "^2.3.3",
+  "node-banner": "^1.4.0"
+ }
 }
