@@ -30,7 +30,7 @@ async function mainMenu () {
                 type: "list",
                 name: "mainMenu",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee","Update an employee role"]
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee","Update an employee role", "Exit"]
             }
         ]);
     // view all departments
@@ -67,6 +67,14 @@ async function mainMenu () {
             mainMenu();
         });
     }
+    // view employees by manager
+    if (answers.mainMenu === "View employees by manager") {
+        employeesByManager();
+    }
+    // view employees by department
+    if (answers.mainMenu === "View employees by department") {
+        employeesByDepartment();
+    }
     // add a department
     if (answers.mainMenu === "Add a department") {
         addDepartment();
@@ -83,6 +91,104 @@ async function mainMenu () {
     if (answers.mainMenu === "Update an employee role") {
         updateEmployeeRole();
     }
+    if (answers.mainMenu === "Exit") {
+        con.end();
+    }
+}
+
+function employeesByManager () {
+
+    let query = ("SELECT id, concat(first_name, ' ', last_name) AS name FROM employee")
+
+    // connection
+    con.query(query, function (err,res) {
+        if (err) return err;
+
+        // assign array to response from connection
+        let employeeIdArr = res
+
+        // map it
+        let managers = res.map(m => m.name)
+
+        // inquirer
+        return inquirer
+            .prompt([
+                                {
+                    type: "list",
+                    name: "manager",
+                    message: "Select Manager:",
+                    choices: managers
+                }
+            ])
+            .then(function (answers) {
+
+                // declare empty ID variable
+                let managerID = ""
+
+                for (i = 0; i < employeeIdArr.length; i++) {
+                    if (employeeIdArr[i].name === answers.manager) {
+                        // assign id from answer to empty variale
+                        managerID = employeeIdArr[i].id
+                    }
+                }  
+                // UPDATE SQL
+                let employeesByManagerQuery = (`SELECT * FROM employee WHERE manager_id = ${managerID}`);
+                con.query(employeesByManagerQuery, function (err,res) {
+                    if (err) return err;
+                    console.table(res);
+                    // return to main menu
+                    mainMenu();
+                });
+
+            })
+    })
+}
+
+function employeesByDepartment() {
+    let query = ("SELECT id, name FROM department")
+
+    // connection
+    con.query(query, function (err,res) {
+        if (err) return err;
+
+        // assign array to response from connection
+        let departmentIdArr = res
+
+        // map it
+        let departments = res.map(d => d.name)
+
+        // inquirer
+        return inquirer
+            .prompt([
+                                {
+                    type: "list",
+                    name: "department",
+                    message: "Select Department:",
+                    choices: departments
+                }
+            ])
+            .then(function (answers) {
+
+                // declare empty ID variable
+                let departmentID = ""
+
+                for (i = 0; i < departmentIdArr.length; i++) {
+                    if (departmentIdArr[i].name === answers.department) {
+                        // assign id from answer to empty variale
+                        departmentID = departmentIdArr[i].id
+                    }
+                }  
+                // UPDATE SQL
+                let employeesByDeptQuery = (`SELECT * FROM department WHERE id = ${departmentID}`);
+                con.query(employeesByDeptQuery, function (err,res) {
+                    if (err) return err;
+                    console.table(res);
+                    // return to main menu
+                    mainMenu();
+                });
+
+            })
+    })
 }
 
 async function addDepartment () {
