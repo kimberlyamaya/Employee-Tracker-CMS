@@ -1,7 +1,6 @@
 const inquirer = require('inquirer');
 const mysql2 = require("mysql2");
 const consoleTable = require("console.table");
-const nodeBanner = require('node-banner');
 const figlet = require('figlet');
 
 // Connect to database
@@ -12,15 +11,12 @@ const con = mysql2.createConnection(
       password: "Chr1stm@s2021",
       database: "tracker_db"
     },
-    //console.log("connected to tracker_db!")
 );
 
 // banner
 figlet("Employee Tracker", function(err, data) {
-    if (err) {
-        console.log('Oops');
-        return;
-    }
+    if (err)
+        return err;
     console.log(data)
 
     mainMenu()
@@ -34,14 +30,13 @@ async function mainMenu () {
                 type: "list",
                 name: "mainMenu",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee",
-                    "Update an employee role"]
+                choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee","Update an employee role"]
             }
         ]);
     // view all departments
     if (answers.mainMenu === "View all departments") {
-        let query = "SELECT * FROM department ORDER BY 1";
-        con.query(query, function (err, res) {
+        let departmentQuery = "SELECT * FROM department ORDER BY 1";
+        con.query(departmentQuery, function (err, res) {
             if (err)
                 return err;
             console.table(res);
@@ -51,16 +46,27 @@ async function mainMenu () {
     }
     // view all roles
     if (answers.mainMenu === "View all roles") {
-        let query_1 = "SELECT role.id, role.title, department.name AS department, role.salary FROM role, department WHERE role.department_id = department.id ORDER BY 1";
-        con.query(query_1, function (err_1, res_1) {
-            if (err_1)
-                return err_1;
-            console.table(res_1);
+        let roleQuery = "SELECT role.id, role.title, department.name AS department, role.salary FROM role, department WHERE role.department_id = department.id ORDER BY 1";
+        con.query(roleQuery, function (err, res) {
+            if (err)
+                return err;
+            console.table(res);
             // return to main menu
             mainMenu();
         });
     }
     // view all employees
+    if (answers.mainMenu === "View all employees") {
+        // UPDATE SQL
+        let employeeQuery = "SELECT * FROM employee";
+        con.query(employeeQuery, function (err, res) {
+            if (err)
+                return err;
+            console.table(res);
+            // return to main menu
+            mainMenu();
+        });
+    }
     // add a department
     if (answers.mainMenu === "Add a department") {
         addDepartment();
@@ -70,6 +76,9 @@ async function mainMenu () {
         addRole();
     }
     // add an employee
+    if (answers.mainMenu === "Add an employee") {
+        addEmployee();
+    }
     // update an employee
     if (answers.mainMenu === "Update an employee role") {
         updateEmployeeRole();
@@ -153,6 +162,111 @@ function addRole() {
 
 }
 
+function addEmployee() {
+    // queries
+    let roleQuery = ("SELECT id, title FROM role")
+    let employeeQuery = ("SELECT id, concat(first_name, ' ', last_name) AS name, role_id, manager_id FROM employee")
+
+    // connections
+    con.query(roleQuery, function (err,res) {
+        if (err) return err;
+
+        // array that equals res
+        let roleArr = res
+
+        // map it
+        let roles = res.map(r => r.title)
+        
+        con.query(employeeQuery, function(err,res) {
+            if (err) return err;
+
+            let employeeArr = res
+
+            let employees = res.map(e => e.name)
+            employees.push("None")        
+   
+            // inquirer
+            return inquirer
+                .prompt([
+                    {
+                        type: "input",
+                        name: "first_name",
+                        message: "Enter Employee's First Name:"
+                    },
+                    {
+                        type: "input",
+                        name: "last_name",
+                        message: "Enter Employee's Last Name:"
+                    },
+                    {
+                        type: "list",
+                        name: "role",
+                        message: "Select Role:",
+                        choices: roles
+                    },
+                    {
+                        type: "list",
+                        name: "manager",
+                        message: "Select Manager:",
+                        choices: employees
+                    }
+                ])
+                .then(function (answers) {
+                    // get IDs of selected options
+
+                    let roleID = ""
+
+                    for (i = 0; i < roleArr.length; i++) {
+                        if (roleArr[i].title === answers.role) {
+                            roleID = roleArr[i].id
+                        }
+                    }
+                    
+                    let employeeID = ""
+
+                    for (j = 0; j < employeeArr.length; j++) {
+                        if (employeeArr[j].name === answers.manager) {
+                            employeeID = employeeArr[j].id
+                        }
+                    }  
+
+
+                    // two seperate queries 
+
+                    let addEmployeeWithManager = (`INSERT INTO employee (first_name,last_name,role_id,manager_id) VALUES ('${answers.first_name}','${answers.last_name}', ${roleID}, ${employeeID})`);
+
+                    let addEmployeeWithNull = (`INSERT INTO employee (first_name,last_name,role_id) VALUES ('${answers.first_name}','${answers.last_name}', ${roleID})`)
+
+                    // if answers.manager = None then run a query
+
+                    if (answers.manager === "None") {
+                        con.query(addEmployeeWithNull, function (err,res) {
+                            if (err) return err;
+                            console.log("\n employee added \n");
+    
+                            // return to main menu
+                            mainMenu();
+                        });
+                    }
+
+                    // if answers.manager != None then run a query
+
+                    if (answers.manager != "None") {
+                        con.query(addEmployeeWithManager, function (err,res) {
+                            if (err) return err;
+                            console.log("\n employee added \n");
+    
+                            // return to main menu
+                            mainMenu();
+                        });
+                    }
+                    
+            })
+
+        })
+    })
+}
+
 function updateEmployeeRole() {
 
     // queries
@@ -215,8 +329,11 @@ function updateEmployeeRole() {
                 // update statement
                 // create connection for update statement
                 let employeeUpdate = "UPDATE employee SET role_id = ? WHERE id = ?"
+
                 con.query(employeeUpdate, [roleID, employeeID], function (err,res) {
                     if (err) return err;
+
+                    console.log("\n employee role updated \n");
 
                     // return to main menu
                     mainMenu();
