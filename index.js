@@ -57,7 +57,7 @@ async function mainMenu () {
     }
     // view all employees
     if (answers.mainMenu === "View all employees") {
-        let employeeQuery = "SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id;"
+        let employeeQuery = "SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id ORDER BY 1;"
         con.query(employeeQuery, function (err, res) {
             if (err)
                 return err;
@@ -103,7 +103,7 @@ async function mainMenu () {
 
 function employeesByManager () {
 
-    let query = ("SELECT employee.id, concat(employee.first_name, ' ', employee.last_name) AS name, manager.id, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE employee.manager_id IS NOT NULL")
+    let query = ("select DISTINCT CONCAT (manager.first_name, ' ', manager.last_name) AS manager, manager.id FROM employee LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE employee.manager_id IS NOT NULL ORDER BY manager.id;")
 
     // connection
     con.query(query, function (err,res) {
@@ -136,7 +136,7 @@ function employeesByManager () {
                         managerID = employeeIdArr[i].id
                     }
                 }  
-                let employeesByManagerQuery = (`SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE manager.id = ${managerID};`);
+                let employeesByManagerQuery = (`SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE manager.id = ${managerID} ORDER BY 1;`);
                 con.query(employeesByManagerQuery, function (err,res) {
                     if (err) return err;
                     console.table(res);
@@ -182,7 +182,7 @@ function employeesByDepartment() {
                         departmentID = departmentIdArr[i].id
                     }
                 }  
-                let employeesByDeptQuery = (`SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.id = ${departmentID};`);
+                let employeesByDeptQuery = (`SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.id = ${departmentID} ORDER BY 1`);
                 con.query(employeesByDeptQuery, function (err,res) {
                     if (err) return err;
                     console.table(res);
@@ -228,7 +228,7 @@ function budgetByDepartment() {
                         departmentID = departmentArr[i].id
                     }
                 }  
-                let employeesByDeptQuery = (`SELECT department.id, department.name, (select SUM(role.salary) from role where role.department_id = department.id) AS total_salary FROM department WHERE department.id = (${departmentID})`);
+                let employeesByDeptQuery = (`SELECT department.id, department.name AS department_name, (select SUM(role.salary) from role where role.department_id = department.id) AS total_salaries FROM department WHERE department.id = (${departmentID}) ORDER BY 1`);
                 con.query(employeesByDeptQuery, function (err,res) {
                     if (err) return err;
                     console.table(res);
@@ -280,7 +280,7 @@ function addRole() {
                 {
                     type: "input",
                     name: "title",
-                    message: "Enter name of Role:"
+                    message: "Enter the title of the Role:"
                 },
                 {
                     type: "input",
@@ -320,8 +320,8 @@ function addRole() {
 
 function addEmployee() {
     // queries
-    let roleQuery = ("SELECT id, title FROM role")
-    let employeeQuery = ("SELECT id, concat(first_name, ' ', last_name) AS name, role_id, manager_id FROM employee")
+    let roleQuery = ("SELECT id, title FROM role ORDER BY 1")
+    let employeeQuery = ("SELECT id, concat(first_name, ' ', last_name) AS name, role_id, manager_id FROM employee ORDER BY 1")
 
     // connections
     con.query(roleQuery, function (err,res) {

@@ -1,27 +1,33 @@
 INSERT INTO department
 (name) 
 VALUES 
-("Engineer"),
-("Sales"),
-("Accounting"),
-("Human Resource");
+("Finance"),
+("Human Resources"),
+("Information Technology"),
+("Operations");
 
 INSERT INTO role
 (title, salary, department_id) 
 VALUES 
-("Senior Software Engineer","200000", 1), 
-("Junior Software Engineer", "100000", 1),
-("Manager of Sales", "120000", 2), 
-("Sales Lead", "80000", 2),
-("Accountant", "100000", 3),
-("Manager of HR", "130000", 4);
+("Cheif Financial Officer","160000", 1), 
+("Accountant", "90000", 1),
+("Director of HR", "140000", 2), 
+("Payroll Assistant", "60000", 2),
+("Director of IT", "140000", 3),
+("Network Admin", "90000", 3),
+("Systems Support", "70000", 3),
+("Operations Manager", "140000", 4),
+("Operations Assistant", "80000", 4);
 
 INSERT INTO employee 
 (first_name, last_name, role_id, manager_id) 
 VALUES 
-("Tom", "Brenden", 3, null), 
-("Kim", "Francisco", 1, null),
-("Ana", "Green", 2, 2),
-("Becca", "Smart", 4, 1),
-("Khloe", "Sparks", 5, null),
-("Sophia", "Shoey", 6, null);
+("Phoebe", "Miller", 1, null), 
+("Jacqueline", "Martinez", 2, 1),
+("Dary", "Brown", 3, null),
+("Alyssa", "Garcia", 4, 3),
+("Tom", "Williams", 5, null),
+("Ray", "Johnson", 6, 5),
+("Jarro", "Davis", 7, 5),
+("Riza", "Rodriguez", 8, null),
+("Nick", "Smith", 9, 8);
