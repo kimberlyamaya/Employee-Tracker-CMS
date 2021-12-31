@@ -30,7 +30,7 @@ async function mainMenu () {
                 type: "list",
                 name: "mainMenu",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee","Update an employee role", "Update an employee manager", "Exit"]
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "View budget by department", "Add a department", "Add a role", "Add an employee","Update an employee role", "Update an employee manager", "Exit"]
             }
         ]);
     // view all departments
@@ -73,6 +73,9 @@ async function mainMenu () {
     // view employees by department
     if (answers.mainMenu === "View employees by department") {
         employeesByDepartment();
+    }
+    if (answers.mainMenu === "View budget by department") {
+        budgetByDepartment();
     }
     // add a department
     if (answers.mainMenu === "Add a department") {
@@ -189,6 +192,53 @@ function employeesByDepartment() {
 
             })
     })
+}
+
+function budgetByDepartment() {
+    let query = ("SELECT id, name FROM department")
+
+    // connection
+    con.query(query, function (err,res) {
+        if (err) return err;
+
+        // assign array to response from connection
+        let departmentArr = res
+
+        // map it
+        let departments = res.map(d => d.name)
+
+        // inquirer
+        return inquirer
+            .prompt([
+                                {
+                    type: "list",
+                    name: "department",
+                    message: "Select Department:",
+                    choices: departments
+                }
+            ])
+            .then(function (answers) {
+
+                // declare empty ID variable
+                let departmentID = ""
+
+                for (i = 0; i < departmentArr.length; i++) {
+                    if (departmentArr[i].name === answers.department) {
+                        // assign id from answer to empty variale
+                        departmentID = departmentArr[i].id
+                    }
+                }  
+                let employeesByDeptQuery = (`SELECT department.id, department.name, (select SUM(role.salary) from role where role.department_id = department.id) AS total_salary FROM department WHERE department.id = (${departmentID})`);
+                con.query(employeesByDeptQuery, function (err,res) {
+                    if (err) return err;
+                    console.table(res);
+                    // return to main menu
+                    mainMenu();
+                });
+
+            })
+    })
+
 }
 
 async function addDepartment () {
