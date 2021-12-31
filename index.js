@@ -30,7 +30,7 @@ async function mainMenu () {
                 type: "list",
                 name: "mainMenu",
                 message: "What would you like to do?",
-                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee","Update an employee role", "Exit"]
+                choices: ["View all departments", "View all roles", "View all employees", "View employees by manager", "View employees by department", "Add a department", "Add a role", "Add an employee","Update an employee role", "Update an employee manager", "Exit"]
             }
         ]);
     // view all departments
@@ -57,8 +57,7 @@ async function mainMenu () {
     }
     // view all employees
     if (answers.mainMenu === "View all employees") {
-        // UPDATE SQL
-        let employeeQuery = "SELECT * FROM employee";
+        let employeeQuery = "SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id;"
         con.query(employeeQuery, function (err, res) {
             if (err)
                 return err;
@@ -91,6 +90,9 @@ async function mainMenu () {
     if (answers.mainMenu === "Update an employee role") {
         updateEmployeeRole();
     }
+    if (answers.mainMenu === "Update an employee manager") {
+        updateEmployeeManager()
+    }
     if (answers.mainMenu === "Exit") {
         con.end();
     }
@@ -98,7 +100,7 @@ async function mainMenu () {
 
 function employeesByManager () {
 
-    let query = ("SELECT id, concat(first_name, ' ', last_name) AS name FROM employee")
+    let query = ("SELECT employee.id, concat(employee.first_name, ' ', employee.last_name) AS name, manager.id, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE employee.manager_id IS NOT NULL")
 
     // connection
     con.query(query, function (err,res) {
@@ -108,7 +110,7 @@ function employeesByManager () {
         let employeeIdArr = res
 
         // map it
-        let managers = res.map(m => m.name)
+        let managers = res.map(m => m.manager)
 
         // inquirer
         return inquirer
@@ -126,13 +128,12 @@ function employeesByManager () {
                 let managerID = ""
 
                 for (i = 0; i < employeeIdArr.length; i++) {
-                    if (employeeIdArr[i].name === answers.manager) {
+                    if (employeeIdArr[i].manager === answers.manager) {
                         // assign id from answer to empty variale
                         managerID = employeeIdArr[i].id
                     }
                 }  
-                // UPDATE SQL
-                let employeesByManagerQuery = (`SELECT * FROM employee WHERE manager_id = ${managerID}`);
+                let employeesByManagerQuery = (`SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE manager.id = ${managerID};`);
                 con.query(employeesByManagerQuery, function (err,res) {
                     if (err) return err;
                     console.table(res);
@@ -178,8 +179,7 @@ function employeesByDepartment() {
                         departmentID = departmentIdArr[i].id
                     }
                 }  
-                // UPDATE SQL
-                let employeesByDeptQuery = (`SELECT * FROM department WHERE id = ${departmentID}`);
+                let employeesByDeptQuery = (`SELECT	employee.id, employee.first_name, employee.last_name, role.title, department.name AS department,role.salary, CONCAT (manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON employee.manager_id = manager.id WHERE department.id = ${departmentID};`);
                 con.query(employeesByDeptQuery, function (err,res) {
                     if (err) return err;
                     console.table(res);
@@ -420,8 +420,7 @@ function updateEmployeeRole() {
                 for (i = 0; i < employeeArr.length; i++) {
                     if (employeeArr[i].name === answers.employee) {
                         employeeID = employeeArr[i].id
-                    }
-                    
+                    } 
                 }
 
                 let roleID = ""
@@ -446,5 +445,65 @@ function updateEmployeeRole() {
                 })
             })
         })       
+    })
+}
+
+function updateEmployeeManager() {
+
+    // queries
+    let employeeQuery = "SELECT id, concat(first_name, ' ', last_name) AS name FROM employee ORDER BY 1"
+
+    // create connections
+    con.query(employeeQuery, function (err,res) {
+        if (err) return err;
+        
+        let employeeArr = res
+
+        let employees = res.map(e => e.name)
+
+        // inquirer questions with arrays plugged in
+        return inquirer
+        .prompt([
+        {
+        type: "list",
+        name: "employee",
+        message: "What employee would you like to update?",
+        choices: employees
+        },
+        {
+        type: "list",
+        name: "manager",
+        message: "Select Manager:",
+        choices: employees
+        }
+        ])
+        .then(function (answers) {
+            // get IDs of selected options
+
+            let employeeID = ""
+            let managerID = ""
+
+            for (i = 0; i < employeeArr.length; i++) {
+                if (employeeArr[i].name === answers.employee) {
+                    employeeID = employeeArr[i].id
+                }
+                if (employeeArr[i].name === answers.manager) {
+                    managerID = employeeArr[i].id
+                }
+            }
+
+            // update statement
+            // create connection for update statement
+            let employeeUpdate = "UPDATE employee SET manager_id = ? WHERE id = ?"
+
+            con.query(employeeUpdate, [managerID, employeeID], function (err,res) {
+                if (err) return err;
+
+                console.log("\n employee manager updated \n");
+
+                // return to main menu
+                mainMenu();
+            })
+        })
     })
 }
